@@ -3,10 +3,14 @@ package main
 import (
 	"UnlockEdv2/src/models"
 	"archive/zip"
+	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 )
@@ -49,15 +53,103 @@ type BrightspaceEnrollment struct {
 	EnrollmentType string `csv:"EnrollmentType"`
 }
 
-func (kc *BrightspaceService) IntoImportUser(bsUser BrightspaceUser) *models.ImportUser {
+func (srv *BrightspaceService) IntoImportUser(bsUser BrightspaceUser) *models.ImportUser {
 	return nil
 }
 
-func (kc *BrightspaceService) IntoCourse(bsCourse BrightspaceCourse) *models.Course {
-	return nil
+func (srv *BrightspaceService) IntoCourse(bsCourse BrightspaceCourse) *models.Course {
+	//step 1 - send
+	id := bsCourse.OrgUnitId
+	courseImageUrl := fmt.Sprintf(srv.BaseURL+"/d2l/api/lp/1.28/courses/%s/image", id)
+	response, err := srv.SendRequest(courseImageUrl)
+	if err != nil {
+		return nil
+	}
+	if bsCourse.OrgUnitId == "6684" {
+		fmt.Println("stop here")
+	}
+	defer response.Body.Close()
+	var imgPath string
+	if response.StatusCode == http.StatusOK {
+		imgBytes, err := io.ReadAll(response.Body)
+		if err == nil {
+			//check error here:   errors.New("no image data available or decoding failed")
+			imgPath, err = UploadBrightspaceImage(imgBytes, id)
+			if err != nil {
+				fmt.Println(" no images ")
+			}
+		} else {
+			imgPath = ""
+		}
+	}
+
+	externalUrl, err := url.JoinPath(srv.BaseURL, "")
+	course := models.Course{
+		ProviderPlatformID:      srv.ProviderPlatformID,
+		ExternalID:              bsCourse.OrgUnitId,
+		Name:                    bsCourse.Name,
+		Type:                    "open_content",
+		OutcomeTypes:            "completion",
+		TotalProgressMilestones: uint(0), //come back to this one
+		Description:             "Brightspace Course: " + bsCourse.Name,
+		ThumbnailURL:            imgPath,
+		ExternalURL:             externalUrl,
+	}
+
+	fmt.Println("image path: ", imgPath)
+	return &course
 }
 
-func (srv *BrightspaceService) GetPluginId(pluginName string) (string, error) {
+func UploadBrightspaceImage(imgBytes []byte, bsCourseId string) (string, error) {
+	filename := "image_brightspace" + "/" + bsCourseId + ".jpg"
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return "", err
+	}
+	if _, err = part.Write(imgBytes); err != nil {
+		return "", err
+	}
+	err = writer.Close()
+	if err != nil {
+		return "", err
+	}
+	request, err := http.NewRequest("POST", os.Getenv("APP_URL")+"/api/upload", body)
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	request.Header.Set("Content-Length", fmt.Sprintf("%d", len(body.Bytes())))
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("server returned non-OK status: %s", response.Status)
+	}
+	urlRes := struct {
+		Data struct {
+			Url string `json:"url"`
+		}
+		Message string `json:"message"`
+	}{}
+	err = json.NewDecoder(response.Body).Decode(&urlRes)
+	if err != nil {
+		return "", err
+	}
+	// fmt.Println("url with lowercase: ", urlRes.data.Url)
+	fmt.Println("url with uppercase: ", urlRes.Data.Url)
+	return urlRes.Data.Url, nil
+}
+
+func (srv *BrightspaceService) getPluginId(pluginName string) (string, error) {
 	var pluginId string
 	resp, err := srv.SendRequest(DataSetsEndpoint)
 	if err != nil {
@@ -77,8 +169,7 @@ func (srv *BrightspaceService) GetPluginId(pluginName string) (string, error) {
 	return pluginId, nil
 }
 
-func (srv *BrightspaceService) DownloadAndUnzipFile(targetDirectory string, targetFileName string, endpointUrl string) (string, error) {
-	//initial method for download/unzip file--WIP
+func (srv *BrightspaceService) downloadAndUnzipFile(targetDirectory string, targetFileName string, endpointUrl string) (string, error) {
 	var destPath string
 	resp, err := srv.SendRequest(endpointUrl)
 	if err != nil {

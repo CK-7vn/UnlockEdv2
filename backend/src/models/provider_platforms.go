@@ -21,6 +21,7 @@ const (
 	CanvasOSS   ProviderPlatformType = "canvas_oss"
 	CanvasCloud ProviderPlatformType = "canvas_cloud"
 	Kolibri     ProviderPlatformType = "kolibri"
+	Brightspace ProviderPlatformType = "brightspace"
 )
 
 type ProviderPlatformState string
@@ -117,7 +118,12 @@ func (provider *ProviderPlatform) GetDefaultRedirectURI() []string {
 		defaultUri := provider.BaseUrl + "/oidccallback/"
 		stripped := strings.Replace(defaultUri, "https", "http", 1)
 		return []string{defaultUri, stripped}
+	//case Brightspace:
+		// Authorization endpoint: https://auth.brightspace.com/oauth2/auth
+		// Token endpoint: https://auth.brightspace.com/core/connect/token
+	//	return []string{provider.BaseUrl} //not sure yet why we need to do this here:::
 	}
+
 	return []string{}
 }
 

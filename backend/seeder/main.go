@@ -76,6 +76,14 @@ func seedTestData(db *gorm.DB) {
 			Type:      models.Kolibri,
 			State:     models.Enabled,
 			AccessKey: "testing_key_replace_me",
+		},
+		{
+			Name:      "Brightspace",
+			BaseUrl:   "https://unlocked.brightspacedemo.com",
+			AccountID: "5196e946-52d9-410b-9851-ffa6390f0b09", //clientID
+			Type:      models.Brightspace,
+			State:     models.Enabled,
+			AccessKey: "-KIJ5WUmermREabxfgVWnQybvlezGgf0Ef730nnL5VE;rt.us-east-1.vWqeE6yvAqOI-Vy5dWZbf6S6aOl4e3udhtG-50r7Z88", //ClientSecret;refresh-token
 		}}
 	for idx := range platforms {
 		if err := db.Create(&platforms[idx]).Error; err != nil {

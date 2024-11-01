@@ -3,38 +3,47 @@ serve:
     cors:
       enabled: true
       allowed_origins:
-        - http://127.0.0.1
-        - http://localhost
-        - https://staging.canvas.unlockedlabs.xyz
+      - http://127.0.0.1
+      - https://127.0.0.1
+      - http://localhost
+      - https://localhost
+      - https://staging.canvas.unlockedlabs.xyz
+      - https://auth.brightspace.com/oauth2/auth
+      - https://auth.brightspace.com/core/connect/token
+      - https://unlocked.brightspacedemo.com
       allowed_methods:
-        - POST
-        - GET
-        - PUT
-        - PATCH
-        - DELETE
+      - POST
+      - GET
+      - PUT
+      - PATCH
+      - DELETE
       allowed_headers:
-        - Authorization
-        - X-Requested-With
+      - Authorization
+      - X-Requested-With
       exposed_headers:
-        - Content-Type
+      - Content-Type
 
   public:
     cors:
       enabled: true
       allowed_origins:
-        - http://localhost
-        - https://staging.canvas.unlockedlabs.xyz
+      - http://localhost
+      - https://localhost
+      - https://staging.canvas.unlockedlabs.xyz
+      - https://auth.brightspace.com/oauth2/auth
+      - https://auth.brightspace.com/core/connect/token
+      - https://unlocked.brightspacedemo.com
       allowed_methods:
-        - POST
-        - GET
-        - PUT
-        - PATCH
-        - DELETE
+      - POST
+      - GET
+      - PUT
+      - PATCH
+      - DELETE
       allowed_headers:
-        - Authorization
+      - Authorization
       exposed_headers:
-        - Content-Type
-        - Access-Control-Allowed-Origins
+      - Content-Type
+      - Access-Control-Allowed-Origins
   cookies:
     same_site_mode: Lax
 log:
@@ -42,10 +51,10 @@ log:
 
 urls:
   self:
-    issuer: http://127.0.0.1
-  login: http://127.0.0.1/self-service/login/browser
-  consent: http://127.0.0.1/consent
-  logout: http://127.0.0.1/logout
+    issuer: https://127.0.0.1
+  login: https://127.0.0.1/self-service/login/browser
+  consent: https://127.0.0.1/consent
+  logout: https://127.0.0.1/logout
   identity_provider:
     url: http://kratos:4434/admin
     publicUrl: http://kratos:4433
@@ -53,11 +62,11 @@ urls:
 dev: true
 secrets:
   system:
-    - Vg2CngwLX2MxZvZaKJnuyVp66cPiiV5bCHANGE_ME_IN_PROD
+  - Vg2CngwLX2MxZvZaKJnuyVp66cPiiV5bCHANGE_ME_IN_PROD
 oidc:
   subject_identifiers:
     supported_types:
-      - pairwise
-      - public
+    - pairwise
+    - public
     pairwise:
       salt: 2839o82hy2839OO#@#$@OFw@ksj8*^@*^$LSwsifw2692oCHANGE_ME_IN_PROD
