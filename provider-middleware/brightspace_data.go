@@ -10,9 +10,10 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/gocarina/gocsv"
 )
 
 type DataSetPlugin struct {
@@ -82,8 +83,6 @@ func (srv *BrightspaceService) IntoCourse(bsCourse BrightspaceCourse) *models.Co
 			imgPath = ""
 		}
 	}
-
-	externalUrl, err := url.JoinPath(srv.BaseURL, "")
 	course := models.Course{
 		ProviderPlatformID:      srv.ProviderPlatformID,
 		ExternalID:              bsCourse.OrgUnitId,
@@ -93,7 +92,7 @@ func (srv *BrightspaceService) IntoCourse(bsCourse BrightspaceCourse) *models.Co
 		TotalProgressMilestones: uint(0), //come back to this one
 		Description:             "Brightspace Course: " + bsCourse.Name,
 		ThumbnailURL:            imgPath,
-		ExternalURL:             externalUrl,
+		ExternalURL:             srv.BaseURL, //update this when the time comes
 	}
 
 	fmt.Println("image path: ", imgPath)
@@ -221,4 +220,15 @@ func (srv *BrightspaceService) downloadAndUnzipFile(targetDirectory string, targ
 		}
 	}
 	return destPath, err
+}
+
+func readCSV[T any](values *T, csvFilePath string) {
+	coursesFile, err := os.OpenFile(csvFilePath, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	defer coursesFile.Close()
+	if err := gocsv.UnmarshalFile(coursesFile, values); err != nil { // Load clients from file
+		panic(err)
+	}
 }

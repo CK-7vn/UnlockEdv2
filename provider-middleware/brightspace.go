@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/gocarina/gocsv"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -143,7 +141,7 @@ func (srv *BrightspaceService) ImportCourses(db *gorm.DB) error {
 
 	//3. read CSV file and parse organizational units
 	bsCourses := []BrightspaceCourse{}
-	ReadCSV(&bsCourses, csvFile)
+	readCSV(&bsCourses, csvFile)
 	for _, bsCourse := range bsCourses {
 		if bsCourse.IsActive == "TRUE" && bsCourse.IsDeleted == "FALSE" && bsCourse.Type == "Course Offering" {
 			//total progress is going to be on hold for now
@@ -166,17 +164,6 @@ func (srv *BrightspaceService) ImportCourses(db *gorm.DB) error {
 	fmt.Println("ImportCourses...")
 
 	return nil
-}
-
-func ReadCSV[T any](values *T, csvFilePath string) {
-	coursesFile, err := os.OpenFile(csvFilePath, os.O_RDWR|os.O_CREATE, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	defer coursesFile.Close()
-	if err := gocsv.UnmarshalFile(coursesFile, values); err != nil { // Load clients from file
-		panic(err)
-	}
 }
 
 func (srv *BrightspaceService) ImportMilestones(coursePair map[string]interface{}, mappings []map[string]interface{}, db *gorm.DB, lastRun time.Time) error {
