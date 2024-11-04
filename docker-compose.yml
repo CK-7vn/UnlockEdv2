@@ -99,7 +99,7 @@ services:
   #     - NATS_URL=nats:4222
   #     - NATS_USER=unlocked
   #     - NATS_PASSWORD=dev
-  #     - BRIGHTSPACE_SCOPE=accommodations:profile:manage,read accountsettings:locale:read,update attributes:schemas:read attributes:users:delete,read,update content:access:read core:*:* datahub:dataexports:download,read datasets:bds:read enrollment:orgunit:read globalusermapping:mapping:write grades:access:read grades:gradeobjects:read groups:group:read localauthenticationsecurity:overrides:manage,read lti:links:read managefiles:files:read organizations:image:read organizations:organization:read orgunits:course:read quizzing:access:read quizzing:quizzes:read role:detail:create,read users:activation:read,update users:own_profile:read users:own_pronoun:read,update users:password:delete,write users:profile:read users:userdata:create,delete,read,update
+  #     - BRIGHTSPACE_SCOPE=accommodations:profile:manage,read accountsettings:locale:read,update attributes:schemas:read attributes:users:delete,read,update datahub:dataexports:download,read datasets:bds:read globalusermapping:mapping:write localauthenticationsecurity:overrides:manage,read organizations:image:read role:detail:create,read users:activation:read,update users:own_profile:read users:own_pronoun:read,update users:password:delete,write users:profile:read
   #   networks:
   #     - intranet
   #   volumes:

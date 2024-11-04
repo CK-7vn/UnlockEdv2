@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	CsvDownloadPath     = "csvs"
 	TokenEndpoint       = "https://auth.brightspace.com/core/connect/token"
 	DataSetsEndpoint    = "https://unlocked.brightspacedemo.com/d2l/api/lp/1.28/dataExport/bds/list"
 	DataDownloadEnpoint = "https://unlocked.brightspacedemo.com/d2l/api/lp/1.28/dataExport/bds/download/%s"
@@ -34,14 +35,12 @@ type BrightspaceService struct {
 }
 
 func newBrightspaceService(provider *models.ProviderPlatform, db *gorm.DB, params *map[string]interface{}) (*BrightspaceService, error) {
-	//scope will be saved as system property???? for now??? until further notice
 	keysSplit := strings.Split(provider.AccessKey, ";")
 	if len(keysSplit) < 2 {
 		return nil, errors.New("unable to find refresh token, unable to intialize BrightspaceService")
 	}
-	//scope := os.Getenv("BRIGHTSPACE_SCOPE"
-	scope := "accommodations:profile:manage,read accountsettings:locale:read,update attributes:schemas:read attributes:users:delete,read,update datahub:dataexports:download,read datasets:bds:read globalusermapping:mapping:write localauthenticationsecurity:overrides:manage,read organizations:image:read role:detail:create,read users:activation:read,update users:own_profile:read users:own_pronoun:read,update users:password:delete,write users:profile:read users:userdata:create,delete,read,update"
-	fmt.Println("RTS Scopes-----> ", scope)
+	//scope := os.Getenv("BRIGHTSPACE_SCOPE")
+	scope := "accommodations:profile:manage,read accountsettings:locale:read,update attributes:schemas:read attributes:users:delete,read,update datahub:dataexports:download,read datasets:bds:read globalusermapping:mapping:write localauthenticationsecurity:overrides:manage,read organizations:image:read role:detail:create,read users:activation:read,update users:own_profile:read users:own_pronoun:read,update users:password:delete,write users:profile:read"
 	if scope == "" {
 		return nil, errors.New("no brightspace scope found, unable to intialize BrightspaceService")
 	}
@@ -61,32 +60,38 @@ func newBrightspaceService(provider *models.ProviderPlatform, db *gorm.DB, param
 	data.Add("client_id", brightspaceService.ClientID)
 	data.Add("client_secret", brightspaceService.ClientSecret)
 	data.Add("scope", brightspaceService.Scope)
-	fmt.Println("RTS made it to before send post request -----> ")
+	log.Infof("refreshing token using endpoint url %v", TokenEndpoint)
 	resp, err := brightspaceService.SendPostRequest(TokenEndpoint, data)
 	if err != nil {
+		log.Errorf("error sending post request to url %v", TokenEndpoint)
 		return nil, err
 	}
-	// //check response here!!!
-	// if resp.StatusCode != http.StatusOK {
-	// 	//grab brightspace's error message
-	// 	return nil, errors.New("unable to request new refresh token from brightspace, response error message is: ")
-	// }
-	fmt.Println("RTS made it to after send post request -----> ")
-	var tokenRespMap map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&tokenRespMap); err != nil {
+	var tokenMap map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenMap); err != nil {
+		log.Errorf("error decoding to response from url %v, error is: %v", TokenEndpoint, err)
 		return nil, err
 	}
-	fmt.Println("tokenRespMap: ", tokenRespMap)
-	brightspaceService.AccessToken = tokenRespMap["access_token"].(string)
-	brightspaceService.RefreshToken = tokenRespMap["refresh_token"].(string)
+	if resp.StatusCode != http.StatusOK {
+		errType, okError := tokenMap["error"].(string)
+		errMsg, okDesc := tokenMap["error_description"].(string)
+		msg := "unable to request new refresh token from brightspace"
+		if okError && okDesc {
+			msg = fmt.Sprintf("unable to request new refresh token from brightspace, response error message is: %s: %s", errType, errMsg)
+			return nil, errors.New(msg)
+		}
+		return nil, errors.New(msg)
+	}
+	brightspaceService.AccessToken = tokenMap["access_token"].(string)
+	brightspaceService.RefreshToken = tokenMap["refresh_token"].(string)
 	provider.AccessKey = brightspaceService.ClientSecret + ";" + brightspaceService.RefreshToken
-	if err := db.Debug().Save(&provider).Error; err != nil {
-		//send admin email??? maybe but not now
+	if err := db.Save(&provider).Error; err != nil {
+		log.Errorf("error trying to update provider access_key with new refresh token, error is %v", err)
 		return nil, err
 	}
+	log.Info("refresh token updated successfully on the provider_platform")
 	headers := make(map[string]string)
 	headers["Authorization"] = "Bearer " + brightspaceService.AccessToken
-	//headers["Accept"] = "application/json"
+	headers["Accept"] = "application/json"
 	brightspaceService.BaseHeaders = &headers
 	return &brightspaceService, nil
 }
@@ -95,11 +100,13 @@ func (srv *BrightspaceService) SendPostRequest(url string, data url.Values) (*ht
 	encodedUrl := data.Encode()
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(encodedUrl))
 	if err != nil {
+		log.Errorf("error creating new POST request to url %v and error is: %v", url, err)
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded") //standard header for url.Values (encoded)
 	resp, err := srv.Client.Do(req)
 	if err != nil {
+		log.Errorf("error executing POST request to url %v and error is: %v", url, err)
 		return nil, err
 	}
 	return resp, nil
@@ -108,6 +115,7 @@ func (srv *BrightspaceService) SendPostRequest(url string, data url.Values) (*ht
 func (srv *BrightspaceService) SendRequest(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		log.Errorf("error creating new GET request to url %v and error is: %v", url, err)
 		return nil, err
 	}
 	for key, value := range *srv.BaseHeaders {
@@ -115,6 +123,7 @@ func (srv *BrightspaceService) SendRequest(url string) (*http.Response, error) {
 	}
 	resp, err := srv.Client.Do(req)
 	if err != nil {
+		log.Errorf("error executing GET request to url %v and error is: %v", url, err)
 		return nil, err
 	}
 	return resp, nil
@@ -126,43 +135,37 @@ func (srv *BrightspaceService) GetUsers(db *gorm.DB) ([]models.ImportUser, error
 }
 
 func (srv *BrightspaceService) ImportCourses(db *gorm.DB) error {
-	//1. get plugin ID
 	pluginId, err := srv.getPluginId("Organizational Units")
 	if err != nil {
+		log.Errorf("error attempting to get plugin id for courses, error is: %v", err)
 		return err
 	}
-	fmt.Println("made it, got the pluginId,", pluginId)
-	//2. download
-	csvFile, err := srv.downloadAndUnzipFile("csvs", "OrganizationalUnits.zip", fmt.Sprintf(DataDownloadEnpoint, pluginId))
+	log.Infof("successfully retrieved plugin id %v for downloading csv file for courses", pluginId)
+	downloadUrl := fmt.Sprintf(DataDownloadEnpoint, pluginId)
+	csvFile, err := srv.downloadAndUnzipFile("OrganizationalUnits.zip", downloadUrl)
 	if err != nil {
+		log.Errorf("error attempting to get plugin id for courses, error is: %v", err)
 		return err
 	}
-	fmt.Println("made it, got the csvFile,", csvFile)
-
-	//3. read CSV file and parse organizational units
+	log.Infof("successfully downloaded and unzipped %v for importing courses", csvFile)
 	bsCourses := []BrightspaceCourse{}
 	readCSV(&bsCourses, csvFile)
+	cleanUpFiles("OrganizationalUnits.zip", csvFile)
+	fields := log.Fields{"provider": srv.ProviderPlatformID, "Function": "ImportCourses", "csvFile": csvFile}
+	log.WithFields(fields).Info("importing courses from provider using csv file")
 	for _, bsCourse := range bsCourses {
 		if bsCourse.IsActive == "TRUE" && bsCourse.IsDeleted == "FALSE" && bsCourse.Type == "Course Offering" {
-			//total progress is going to be on hold for now
+			if db.Where("provider_platform_id = ? AND external_id = ?", srv.ProviderPlatformID, bsCourse.OrgUnitId).First(&models.Course{}).Error == nil {
+				continue
+			}
+			log.Infof("importing course named %v with external id %v", bsCourse.Name, bsCourse.OrgUnitId)
 			course := srv.IntoCourse(bsCourse)
-			fmt.Println(course.Description)
 			if err := db.Create(&course).Error; err != nil {
-				log.Errorln("error creating course in db, error is: ", err)
+				log.Errorf("error creating course in db, error is: %v", err)
 				continue
 			}
 		}
 	}
-
-	// keys := []string{"Users", "Quiz Attempts", "Grade Objects Log", "Quiz Attempts Log", "Assignment Submissions", "Organizational Units", "User Enrollments", "Users"}
-	//"Organizational Units"
-
-	// bulkDataIdMap, err := service.getBulkDataDownloadLinks()
-	// 1. ///
-	// 2. Make REST API call is to get the map of bulk data pointers then we will have access to all of the zip files. This file is JSON and contains IDs required to obtain bulk data files.
-	// 3. Download all zip files needed and extract the CSV from within each zip file.
-	fmt.Println("ImportCourses...")
-
 	return nil
 }
 
@@ -177,6 +180,5 @@ func (srv *BrightspaceService) ImportActivityForCourse(coursePair map[string]int
 }
 
 func (srv *BrightspaceService) GetJobParams() *map[string]interface{} {
-	fmt.Println("GetJobParams...")
 	return srv.JobParams
 }

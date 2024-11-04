@@ -11,7 +11,7 @@ import (
 
 func (srv *Server) registerImageRoutes() {
 	// this route isn't behind the /api prefix because it is only called by middleware/internal services
-	srv.Mux.Handle("POST /upload", srv.handleError(srv.handleUploadHandler))
+	srv.Mux.Handle("POST /api/upload", srv.handleError(srv.handleUploadHandler))
 	srv.Mux.Handle("GET /api/photos/{id}", srv.handleError(srv.handleHostPhotos))
 }
 
