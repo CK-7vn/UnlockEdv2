@@ -92,6 +92,15 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 			} else {
 				log.Info("Exiting URL reused: ", r.URL.String(), "content URL saved: ", url.ContentURL, "ID of URL: ", url.ID)
 			}
+			activity := models.OpenContentActivity{
+				OpenContentProviderID: library.OpenContentProviderID,
+				UserID:                user.UserID,
+				ContentID:             library.ID,
+				OpenContentUrlID:      url.ID,
+			}
+			if err := srv.Db.Create(&activity).Error; err != nil {
+				log.Warn("unable to create content activity")
+			}
 		}
 		ctx := context.WithValue(r.Context(), libraryKey, &library)
 		next.ServeHTTP(w, r.WithContext(ctx))
