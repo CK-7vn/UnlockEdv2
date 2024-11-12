@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,6 +79,19 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 		if err := tx.Error; err != nil {
 			srv.errorResponse(w, http.StatusNotFound, "Library not found or visibility is not enabled")
 			return
+		}
+		if !strings.Contains(r.URL.String(), ".") {
+			//check to see if it exists in the OpenContentUrls table OpenContentActivity
+			url := models.OpenContentUrl{}
+			if srv.Db.Where("content_url = ?", r.URL.String()).First(&url).Error != nil {
+				url.ContentURL = r.URL.String()
+				if err := srv.Db.Create(&url).Error; err != nil {
+					log.Warn("unable to create content activity")
+				}
+				log.Info("Created URL: ", r.URL.String(), url.ContentURL, url.ID)
+			} else {
+				log.Info("Exiting URL reused: ", r.URL.String(), "content URL saved: ", url.ContentURL, "ID of URL: ", url.ID)
+			}
 		}
 		ctx := context.WithValue(r.Context(), libraryKey, &library)
 		next.ServeHTTP(w, r.WithContext(ctx))

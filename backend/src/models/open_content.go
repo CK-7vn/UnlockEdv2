@@ -19,6 +19,24 @@ type OpenContentProvider struct {
 	Tasks  []RunnableTask `gorm:"foreignKey:OpenContentProviderID" json:"-"`
 }
 
+type OpenContentActivity struct {
+	DatabaseFields
+	OpenContentProviderID uint `gorm:"not null" json:"open_content_provider_id"`
+	UserID                uint `gorm:"not null" json:"user_id"`
+	ContentID             uint `gorm:"not null" json:"content_id"`
+	OpenContentUrlID      uint `gorm:"not null" json:"open_content_url_id"`
+
+	User                *User                `gorm:"foreignKey:UserID" json:"-"`
+	OpenContentProvider *OpenContentProvider `gorm:"foreignKey:OpenContentProviderID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"open_content_provider"`
+}
+
+func (OpenContentActivity) TableName() string { return "open_content_activities" }
+
+type OpenContentUrl struct {
+	ID         uint   `gorm:"primaryKey" json:"-"`
+	ContentURL string `gorm:"size:255" json:"content_url"`
+}
+
 const (
 	KolibriThumbnailUrl string = "https://learningequality.org/static/assets/kolibri-ecosystem-logos/blob-logo.svg"
 	Kiwix               string = "Kiwix"
