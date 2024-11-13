@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"UnlockEdv2/src/database"
 	"UnlockEdv2/src/models"
 	"context"
 	"crypto/sha256"
@@ -80,31 +81,41 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 			srv.errorResponse(w, http.StatusNotFound, "Library not found or visibility is not enabled")
 			return
 		}
-		if !strings.Contains(r.URL.String(), ".") {
-			//check to see if it exists in the OpenContentUrls table OpenContentActivity
-			url := models.OpenContentUrl{}
-			if srv.Db.Where("content_url = ?", r.URL.String()).First(&url).Error != nil {
-				url.ContentURL = r.URL.String()
-				if err := srv.Db.Create(&url).Error; err != nil {
-					log.Warn("unable to create content activity")
-				}
-				log.Info("Created URL: ", r.URL.String(), url.ContentURL, url.ID)
-			} else {
-				log.Info("Exiting URL reused: ", r.URL.String(), "content URL saved: ", url.ContentURL, "ID of URL: ", url.ID)
-			}
+		urlString := r.URL.String()
+		if !strings.Contains(urlString, ".") && !strings.HasSuffix(urlString, "/") {
 			activity := models.OpenContentActivity{
 				OpenContentProviderID: library.OpenContentProviderID,
 				UserID:                user.UserID,
 				ContentID:             library.ID,
-				OpenContentUrlID:      url.ID,
 			}
-			if err := srv.Db.Create(&activity).Error; err != nil {
-				log.Warn("unable to create content activity")
-			}
+			ctxCancel, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			go createActivity(ctxCancel, urlString, activity, srv.Db)
 		}
 		ctx := context.WithValue(r.Context(), libraryKey, &library)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}))
+}
+
+func createActivity(ctx context.Context, urlString string, activity models.OpenContentActivity, dB *database.DB) {
+	select {
+	case <-ctx.Done():
+		log.Warn("database call was cancelled for urlString: ", urlString)
+		return
+	default:
+		url := models.OpenContentUrl{}
+		if dB.WithContext(ctx).Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
+			url.ContentURL = urlString
+			if err := dB.Create(&url).Error; err != nil {
+				log.Warn("unable to create content url for activity")
+				return
+			}
+		}
+		activity.OpenContentUrlID = url.ID
+		if err := dB.WithContext(ctx).Create(&activity).Error; err != nil {
+			log.Warn("unable to create content activity for url, ", urlString)
+		}
+	}
 }
 
 func corsMiddleware(next http.Handler) http.HandlerFunc {
