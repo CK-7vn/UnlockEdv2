@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,6 +26,9 @@ const (
 	videoKey     contextKey = "video"
 	// rate limit is 50 requests from a unique user in a minute
 )
+
+// regular expression used below for filtering open_content_urls
+var resourceRegExpression = regexp.MustCompile(`\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|ttf|map|webp|otf|vtt|webm|json|woff2|pdf)(\?|%3F|$)`)
 
 func (srv *Server) applyMiddleware(h HttpFunc) http.Handler {
 	return srv.applyStandardMiddleware(
@@ -82,7 +86,7 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		urlString := r.URL.String()
-		if !strings.Contains(urlString, ".") && !strings.HasSuffix(urlString, "/") {
+		if !resourceRegExpression.MatchString(urlString) && !strings.Contains(urlString, "iframe") {
 			activity := models.OpenContentActivity{
 				OpenContentProviderID: library.OpenContentProviderID,
 				UserID:                user.UserID,
