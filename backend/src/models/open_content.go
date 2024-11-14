@@ -22,6 +22,7 @@ type OpenContentProvider struct {
 
 type OpenContentActivity struct {
 	OpenContentProviderID uint      `gorm:"not null" json:"open_content_provider_id"`
+	FacilityID            uint      `gorm:"not null" json:"facility_id"`
 	UserID                uint      `gorm:"not null" json:"user_id"`
 	ContentID             uint      `gorm:"not null" json:"content_id"`
 	OpenContentUrlID      uint      `gorm:"not null" json:"open_content_url_id"`
@@ -29,6 +30,7 @@ type OpenContentActivity struct {
 
 	User                *User                `gorm:"foreignKey:UserID" json:"-"`
 	OpenContentProvider *OpenContentProvider `gorm:"foreignKey:OpenContentProviderID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"open_content_provider"`
+	Facility            *Facility            `json:"-" gorm:"foreignKey:FacilityID;references:ID"`
 }
 
 func (OpenContentActivity) TableName() string { return "open_content_activities" }

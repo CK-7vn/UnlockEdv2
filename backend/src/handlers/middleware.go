@@ -89,6 +89,7 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 		if !resourceRegExpression.MatchString(urlString) && !strings.Contains(urlString, "iframe") {
 			activity := models.OpenContentActivity{
 				OpenContentProviderID: library.OpenContentProviderID,
+				FacilityID:            user.FacilityID,
 				UserID:                user.UserID,
 				ContentID:             library.ID,
 			}
