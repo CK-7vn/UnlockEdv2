@@ -46,6 +46,14 @@ func (srv *Server) handleGetVideoById(w http.ResponseWriter, r *http.Request, lo
 	if user.Role != models.Admin && !video.VisibilityStatus || video.Availability != models.VideoAvailable {
 		return newForbiddenServiceError(errors.New("video not visible"), "you are not authorized to view this content")
 	}
+	videoViewerUrl := fmt.Sprintf("/viewer/videos/%d", video.ID)
+	activity := models.OpenContentActivity{
+		OpenContentProviderID: video.OpenContentProviderID,
+		FacilityID:            user.FacilityID,
+		UserID:                user.UserID,
+		ContentID:             video.ID,
+	}
+	go createActivity(videoViewerUrl, activity, srv.Db)
 	return writeJsonResponse(w, http.StatusOK, video)
 }
 

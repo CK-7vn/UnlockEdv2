@@ -93,33 +93,26 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 				UserID:                user.UserID,
 				ContentID:             library.ID,
 			}
-			ctxCancel, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			defer cancel()
-			go createActivity(ctxCancel, urlString, activity, srv.Db)
+			go createActivity(urlString, activity, srv.Db)
 		}
 		ctx := context.WithValue(r.Context(), libraryKey, &library)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}))
 }
 
-func createActivity(ctx context.Context, urlString string, activity models.OpenContentActivity, dB *database.DB) {
-	select {
-	case <-ctx.Done():
-		log.Warn("database call was cancelled for urlString: ", urlString)
-		return
-	default:
-		url := models.OpenContentUrl{}
-		if dB.WithContext(ctx).Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
-			url.ContentURL = urlString
-			if err := dB.Create(&url).Error; err != nil {
-				log.Warn("unable to create content url for activity")
-				return
-			}
+func createActivity(urlString string, activity models.OpenContentActivity, dB *database.DB) {
+	url := models.OpenContentUrl{}
+	if dB.Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
+		log.Info("creating url, ", urlString)
+		url.ContentURL = urlString
+		if err := dB.Create(&url).Error; err != nil {
+			log.Warn("unable to create content url for activity")
+			return
 		}
-		activity.OpenContentUrlID = url.ID
-		if err := dB.WithContext(ctx).Create(&activity).Error; err != nil {
-			log.Warn("unable to create content activity for url, ", urlString)
-		}
+	}
+	activity.OpenContentUrlID = url.ID
+	if err := dB.Create(&activity).Error; err != nil {
+		log.Warn("unable to create content activity for url, ", urlString)
 	}
 }
 
