@@ -22,7 +22,8 @@ export default function OpenContentManagement() {
     }, [activeTab]);
     const tabs = [
         { name: OpenContentProviderType.KIWIX, value: 'Libraries' },
-        { name: OpenContentProviderType.VIDEOS, value: 'Videos' }
+        { name: OpenContentProviderType.VIDEOS, value: 'Videos' },
+        { name: 'Favorites', value: 'Favorites' }
     ];
 
     const handlePageChange = (tab: Tab) => {

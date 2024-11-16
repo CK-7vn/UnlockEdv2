@@ -100,7 +100,10 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 				srv.errorResponse(w, http.StatusNotFound, "Library not found, issue marshaling libary values")
 				return
 			}
-			libraryBucket.Put(resourceID, marshaledParams)
+			if _, err := libraryBucket.Put(resourceID, marshaledParams); err != nil {
+				srv.errorResponse(w, http.StatusNotFound, "Library not found, issue adding parameters to cache")
+				return
+			}
 		}
 		if user.Role == models.Student && !proxyParams.VisibilityStatus {
 			srv.errorResponse(w, http.StatusNotFound, "Visibility is not enabled")
