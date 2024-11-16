@@ -82,6 +82,8 @@ func updateLibraryBucket(libraryBucket nats.KeyValue, key string, library models
 			log.warn("unable to marshal value to put into the LibaryPaths bucket")
 			return
 		}
-		libraryBucket.Put(key, marshaledParams)
+		if _, err := libraryBucket.Put(key, marshaledParams); err != nil {
+			log.warnf("unable to update value within LibaryPaths bucket, error is %v", err)
+		}
 	}
 }
