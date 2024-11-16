@@ -71,31 +71,52 @@ func (srv *Server) videoProxyMiddleware(next http.Handler) http.Handler {
 
 func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 	return srv.applyStandardMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		libraryBucket := srv.buckets[LibraryPaths]
 		resourceID := r.PathValue("id")
-		var library models.Library
-		tx := srv.Db.Model(&models.Library{}).Preload("OpenContentProvider").Where("id = ?", resourceID)
 		user := r.Context().Value(ClaimsKey).(*Claims)
-		switch user.Role {
-		case models.Admin:
-			tx = tx.First(&library)
-		default:
-			tx = tx.First(&library, "visibility_status = true")
+		entry, err := libraryBucket.Get(resourceID)
+		var proxyParams models.LibraryProxyPO
+		if err == nil { //found in bucket going to use cached slice of bytes
+			err = json.Unmarshal(entry.Value(), &proxyParams)
+			if err != nil {
+				srv.errorResponse(w, http.StatusNotFound, "Library not found, issue unmarshaling libary values")
+				return
+			}
+		} else { //not in bucket going to call database to get required data and then add to bucket
+			var library models.Library
+			if srv.Db.Debug().Model(&models.Library{}).Preload("OpenContentProvider").Where("id = ?", resourceID).First(&library).RowsAffected == 0 {
+				srv.errorResponse(w, http.StatusNotFound, "Library not found.")
+				return
+			}
+			proxyParams = models.LibraryProxyPO{
+				ID:                    library.ID,
+				Path:                  library.Path,
+				BaseUrl:               library.OpenContentProvider.BaseUrl,
+				OpenContentProviderID: library.OpenContentProvider.ID,
+				VisibilityStatus:      library.VisibilityStatus,
+			}
+			marshaledParams, err := json.Marshal(proxyParams)
+			if err != nil {
+				srv.errorResponse(w, http.StatusNotFound, "Library not found, issue marshaling libary values")
+				return
+			}
+			libraryBucket.Put(resourceID, marshaledParams)
 		}
-		if err := tx.Error; err != nil {
-			srv.errorResponse(w, http.StatusNotFound, "Library not found or visibility is not enabled")
+		if user.Role == models.Student && !proxyParams.VisibilityStatus {
+			srv.errorResponse(w, http.StatusNotFound, "Visibility is not enabled")
 			return
 		}
 		urlString := r.URL.String()
 		if !resourceRegExpression.MatchString(urlString) && !strings.Contains(urlString, "iframe") {
 			activity := models.OpenContentActivity{
-				OpenContentProviderID: library.OpenContentProviderID,
+				OpenContentProviderID: proxyParams.OpenContentProviderID,
 				FacilityID:            user.FacilityID,
 				UserID:                user.UserID,
-				ContentID:             library.ID,
+				ContentID:             proxyParams.ID,
 			}
-			go createActivity(urlString, activity, srv.Db)
+			createActivity(urlString, activity, srv.Db)
 		}
-		ctx := context.WithValue(r.Context(), libraryKey, &library)
+		ctx := context.WithValue(r.Context(), libraryKey, &proxyParams)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}))
 }
@@ -103,7 +124,6 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 func createActivity(urlString string, activity models.OpenContentActivity, dB *database.DB) {
 	url := models.OpenContentUrl{}
 	if dB.Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
-		log.Info("creating url, ", urlString)
 		url.ContentURL = urlString
 		if err := dB.Create(&url).Error; err != nil {
 			log.Warn("unable to create content url for activity")
