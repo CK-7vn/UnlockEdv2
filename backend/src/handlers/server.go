@@ -153,9 +153,10 @@ func oryConfig() *ory.Configuration {
 }
 
 const (
-	CachedUsers string = "cache_users"
-	RateLimit   string = "rate_limit"
-	CsrfToken   string = "csrf_token"
+	CachedUsers  string = "cache_users"
+	RateLimit    string = "rate_limit"
+	CsrfToken    string = "csrf_token"
+	LibraryPaths string = "library_paths"
 )
 
 func (srv *Server) setupBucket() error {
@@ -165,7 +166,7 @@ func (srv *Server) setupBucket() error {
 		return err
 	}
 	buckets := map[string]nats.KeyValue{}
-	for _, bucket := range []string{CachedUsers, RateLimit, CsrfToken} {
+	for _, bucket := range []string{CachedUsers, RateLimit, CsrfToken, LibraryPaths} {
 		kv, err := js.KeyValue(bucket)
 		if err == nats.ErrBucketNotFound {
 			kv, err = js.CreateKeyValue(&nats.KeyValueConfig{
