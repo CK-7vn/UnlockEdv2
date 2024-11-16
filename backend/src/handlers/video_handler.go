@@ -54,7 +54,7 @@ func (srv *Server) handleGetVideoById(w http.ResponseWriter, r *http.Request, lo
 		UserID:                user.UserID,
 		ContentID:             video.ID,
 	}
-	go createActivity(videoViewerUrl, activity, srv.Db)
+	createActivity(videoViewerUrl, activity, srv.Db)
 	return writeJsonResponse(w, http.StatusOK, video)
 }
 
