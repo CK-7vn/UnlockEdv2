@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"UnlockEdv2/src/database"
 	"UnlockEdv2/src/models"
 	"context"
 	"crypto/sha256"
@@ -117,26 +116,32 @@ func (srv *Server) libraryProxyMiddleware(next http.Handler) http.Handler {
 				UserID:                user.UserID,
 				ContentID:             proxyParams.ID,
 			}
-			createActivity(urlString, activity, srv.Db)
+			srv.createActivity(urlString, activity)
 		}
 		ctx := context.WithValue(r.Context(), libraryKey, &proxyParams)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}))
 }
 
-func createActivity(urlString string, activity models.OpenContentActivity, dB *database.DB) {
+func (srv *Server) createActivity(urlString string, activity models.OpenContentActivity) {
 	url := models.OpenContentUrl{}
-	if dB.Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
+	if srv.Db.Where("content_url = ?", urlString).First(&url).RowsAffected == 0 {
 		url.ContentURL = urlString
-		if err := dB.Create(&url).Error; err != nil {
+		if err := srv.Db.Create(&url).Error; err != nil {
 			log.Warn("unable to create content url for activity")
 			return
 		}
 	}
 	activity.OpenContentUrlID = url.ID
-	if err := dB.Create(&activity).Error; err != nil {
+	if err := srv.Db.Create(&activity).Error; err != nil {
 		log.Warn("unable to create content activity for url, ", urlString)
 	}
+	// var fav models.OpenContentFavorite
+	// if srv.Db.Debug().Model(&models.OpenContentFavorite{}).Where("user_id = ? AND content_id = ? AND open_content_url_id = ?", activity.UserID, activity.ContentID, activity.OpenContentUrlID).First(&fav).RowsAffected > 0 {
+	// 	srv.wsClient.notifyUser(activity.UserID, []byte("true"))
+	// } else {
+	// 	srv.wsClient.notifyUser(activity.UserID, []byte("false"))
+	// }
 }
 
 func corsMiddleware(next http.Handler) http.HandlerFunc {

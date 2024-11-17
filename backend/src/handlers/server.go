@@ -26,6 +26,7 @@ type Server struct {
 	Client    *http.Client
 	nats      *nats.Conn
 	buckets   map[string]nats.KeyValue
+	wsClient  *ClientManager
 }
 
 /**
@@ -58,6 +59,7 @@ func (srv *Server) RegisterRoutes() {
 	srv.registerProgramSectionEnrollmentssRoutes()
 	srv.registerAttendanceRoutes()
 	srv.registerVideoRoutes()
+	srv.registerWebsocketRoute()
 	srv.Mux.HandleFunc("/api/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("OK")); err != nil {
 			log.Errorln("Error writing healthcheck response: ", err)
@@ -114,6 +116,7 @@ func newServer() *Server {
 	if err := server.setupDefaultAdminInKratos(); err != nil {
 		log.Fatal("Error setting up default admin in Kratos")
 	}
+	server.wsClient = newClientManager()
 	return &server
 }
 
