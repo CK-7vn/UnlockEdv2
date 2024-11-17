@@ -64,6 +64,7 @@ func (srv *Server) handleForwardKiwixProxy(w http.ResponseWriter, r *http.Reques
 			},
 		},
 		ModifyResponse: func(res *http.Response) error {
+			res.Header.Set("Cache-Control", "no-store, no-cache, must-revalidate, private") //need to turn cache off so we can keep tracking activity
 			if res.StatusCode == http.StatusFound || res.StatusCode == http.StatusSeeOther || res.StatusCode == http.StatusMovedPermanently {
 				location := res.Header.Get("Location")
 				if location != "" {
