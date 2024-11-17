@@ -138,9 +138,9 @@ func (srv *Server) createActivity(urlString string, activity models.OpenContentA
 	}
 	// var fav models.OpenContentFavorite
 	// if srv.Db.Debug().Model(&models.OpenContentFavorite{}).Where("user_id = ? AND content_id = ? AND open_content_url_id = ?", activity.UserID, activity.ContentID, activity.OpenContentUrlID).First(&fav).RowsAffected > 0 {
-	// 	srv.wsClient.notifyUser(activity.UserID, []byte("true"))
+	srv.wsClient.notifyUser(activity.UserID, []byte("true"))
 	// } else {
-	// 	srv.wsClient.notifyUser(activity.UserID, []byte("false"))
+	//srv.wsClient.notifyUser(activity.UserID, []byte("false"))
 	// }
 }
 
