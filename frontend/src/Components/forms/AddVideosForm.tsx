@@ -23,7 +23,7 @@ export default function AddVideosForm({ onSuccess }: AddVideoFormProps) {
         return (
             <span>
                 {badLinks.map((link, idx) => (
-                    <p id={`${idx}`} className="text-red-500">
+                    <p key={idx} id={`${idx}`} className="text-red-500">
                         {link}
                     </p>
                 ))}

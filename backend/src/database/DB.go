@@ -119,6 +119,7 @@ func MigrateTesting(db *gorm.DB) {
 		&models.Video{},
 		&models.VideoDownloadAttempt{},
 		&models.VideoFavorite{},
+		&models.LibraryFavorite{},
 	}
 	for _, table := range TableList {
 		log.Printf("Migrating %T table...", table)

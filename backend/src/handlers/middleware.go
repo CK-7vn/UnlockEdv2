@@ -136,12 +136,12 @@ func (srv *Server) createActivity(urlString string, activity models.OpenContentA
 	if err := srv.Db.Create(&activity).Error; err != nil {
 		log.Warn("unable to create content activity for url, ", urlString)
 	}
-	// var fav models.OpenContentFavorite
-	// if srv.Db.Debug().Model(&models.OpenContentFavorite{}).Where("user_id = ? AND content_id = ? AND open_content_url_id = ?", activity.UserID, activity.ContentID, activity.OpenContentUrlID).First(&fav).RowsAffected > 0 {
-	srv.wsClient.notifyUser(activity.UserID, []byte("true"))
-	// } else {
-	//srv.wsClient.notifyUser(activity.UserID, []byte("false"))
-	// }
+	var fav models.LibraryFavorite
+	if srv.Db.Debug().Model(&models.LibraryFavorite{}).Where("user_id = ? AND content_id = ? AND open_content_url_id = ?", activity.UserID, activity.ContentID, activity.OpenContentUrlID).First(&fav).RowsAffected > 0 {
+		srv.wsClient.notifyUser(activity.UserID, []byte("true"))
+	} else {
+		srv.wsClient.notifyUser(activity.UserID, []byte("false"))
+	}
 }
 
 func corsMiddleware(next http.Handler) http.HandlerFunc {

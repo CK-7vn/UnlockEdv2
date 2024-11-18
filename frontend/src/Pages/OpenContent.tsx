@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import TabView from '@/Components/TabView';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/useAuth';
+import { mutate } from 'swr';
 
 export default function OpenContent() {
     const { setPathVal } = usePathValue();
@@ -20,16 +21,25 @@ export default function OpenContent() {
             : { name: 'Videos', value: 'Videos' }
     );
     useEffect(() => {
-        setPathVal([{ path_id: ':kind', value: activeTab.value as string }]);
+        void setPathVal([
+            { path_id: ':kind', value: activeTab.value as string }
+        ]);
     }, [activeTab]);
     const tabs = [
         { name: OpenContentProviderType.KIWIX, value: 'Libraries' },
-        { name: OpenContentProviderType.VIDEOS, value: 'Videos' }
+        { name: OpenContentProviderType.VIDEOS, value: 'Videos' },
+        { name: 'Favorites', value: 'Favorites' }
     ];
 
     const handlePageChange = (tab: Tab) => {
         setActiveTab(tab);
         navigate(`/open-content/${tab.value}`);
+
+        if (tab.value === 'Libraries' || tab.value === 'Videos') {
+            void mutate('/api/libraries');
+            void mutate('open-content/favorites');
+            void setPathVal([{ path_id: ':kind', value: tab.value as string }]);
+        }
     };
 
     return (
@@ -52,7 +62,9 @@ export default function OpenContent() {
             <TabView
                 tabs={tabs}
                 activeTab={activeTab}
-                setActiveTab={handlePageChange}
+                setActiveTab={(tab) => {
+                    void handlePageChange(tab);
+                }}
             />
             <div className="flex flex-row gap-4 pt-8 pb-8">
                 <Outlet />

@@ -42,6 +42,7 @@ import { ToastProvider } from './Context/ToastCtx.tsx';
 import VideoViewer from './Components/VideoEmbedViewer.tsx';
 import VideoContent from './Components/VideoContent.tsx';
 import OpenContentManagement from './Pages/OpenContentManagement.tsx';
+import FavoritesPage from './Pages/Favorites.tsx';
 
 const WithAuth: React.FC = () => {
     return (
@@ -171,6 +172,15 @@ const router = createBrowserRouter([
                                     title: 'Videos',
                                     path: ['open-content', 'videos']
                                 }
+                            },
+                            {
+                                path: 'favorites',
+                                element: <FavoritesPage />,
+                                errorElement: <Error />,
+                                handle: {
+                                    title: 'Favorites',
+                                    path: ['open-content', 'favorites']
+                                }
                             }
                         ]
                     },
@@ -299,6 +309,18 @@ const router = createBrowserRouter([
                                 handle: {
                                     title: 'Videos',
                                     path: ['open-content-management', 'videos']
+                                }
+                            },
+                            {
+                                path: 'favorites',
+                                element: <FavoritesPage />,
+                                errorElement: <Error />,
+                                handle: {
+                                    title: 'Favorites',
+                                    path: [
+                                        'open-content-management',
+                                        'favorites'
+                                    ]
                                 }
                             },
                             {}
