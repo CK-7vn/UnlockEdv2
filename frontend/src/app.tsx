@@ -55,6 +55,7 @@ import OpenContentManagement from './Pages/OpenContentManagement.tsx';
 import { FeatureAccess, INIT_KRATOS_LOGIN_FLOW } from './common.ts';
 import FavoritesPage from './Pages/Favorites.tsx';
 import OpenContentLevelDashboard from './Pages/OpenContentLevelDashboard.tsx';
+import HelpfulLinksManagement from './Pages/HelpfulLinksManagement.tsx';
 
 const WithAuth: React.FC = () => {
     return (
@@ -438,6 +439,17 @@ const router = createBrowserRouter([
                                             path: [
                                                 'open-content-management',
                                                 'videos'
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        path: 'helpful-links',
+                                        element: <HelpfulLinksManagement />,
+                                        handle: {
+                                            title: 'Helpful Links',
+                                            path: [
+                                                'open-content-management',
+                                                'helpful-links'
                                             ]
                                         }
                                     }
