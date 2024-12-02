@@ -9,25 +9,29 @@ export default function OpenContentManagement() {
     const navigate = useNavigate();
     const route = useLocation();
     const tab = route.pathname.split('/')[2] ?? 'libraries';
-    const tabOptions: Record<string, Tab> = {
-        libraries: { name: OpenContentProviderType.KIWIX, value: 'Libraries' },
-        videos: { name: OpenContentProviderType.VIDEOS, value: 'Videos' },
-        links: { name: OpenContentProviderType.LINKS, value: 'Helpful Links' }
-    };
-    const [activeTab, setActiveTab] = useState<Tab>(tabOptions[tab]);
-    useEffect(() => {
-        setPathVal([{ path_id: ':kind', value: activeTab.value as string }]);
-    }, [activeTab]);
-
-    const tabs = [
+    const tabOptions: Tab[] = [
         { name: OpenContentProviderType.KIWIX, value: 'libraries' },
         { name: OpenContentProviderType.VIDEOS, value: 'videos' },
         { name: OpenContentProviderType.LINKS, value: 'helpful-links' }
     ];
+    const [activeTab, setActiveTab] = useState<Tab>(
+        tabOptions.find((t) => t.value === tab) ?? tabOptions[0]
+    );
+    useEffect(() => {
+        setPathVal([{ path_id: ':kind', value: activeTab.value as string }]);
+    }, [activeTab]);
 
     const handlePageChange = (tab: Tab) => {
         setActiveTab(tab);
         navigate(`/open-content-management/${tab.value}`);
+    };
+
+    const handlePreviewStudentView = () => {
+        if (activeTab.value === 'helpful-links') {
+            navigate(`/open-content/libraries`);
+        } else {
+            navigate(`/open-content/${activeTab.value}`);
+        }
     };
 
     return (
@@ -36,13 +40,13 @@ export default function OpenContentManagement() {
                 <h1>Open Content Management</h1>
                 <button
                     className="button border border-primary bg-transparent text-body-text"
-                    onClick={() => navigate(`/open-content/${activeTab.value}`)}
+                    onClick={handlePreviewStudentView}
                 >
                     Preview Student View
                 </button>
             </div>
             <TabView
-                tabs={tabs}
+                tabs={tabOptions}
                 activeTab={activeTab}
                 setActiveTab={handlePageChange}
             />
