@@ -77,7 +77,7 @@ export default function LibaryLayout({
     }, [filterLibrariesAdmin, filterLibraries, searchTerm]);
 
     return (
-        <div className="flex flex-col gap-8">
+        <>
             <div className="flex flex-row gap-4">
                 <SearchBar
                     searchTerm={searchTerm}
@@ -116,6 +116,6 @@ export default function LibaryLayout({
                     />
                 </div>
             )}
-        </div>
+        </>
     );
 }

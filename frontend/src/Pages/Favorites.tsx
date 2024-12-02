@@ -30,7 +30,7 @@ export default function FavoritesPage() {
     };
 
     return (
-        <div className="flex flex-col gap-8">
+        <>
             <div className="grid grid-cols-4 gap-6">
                 {favorites.map((favorite) => (
                     <FavoriteCard
@@ -60,6 +60,6 @@ export default function FavoritesPage() {
                     />
                 </div>
             )}
-        </div>
+        </>
     );
 }
