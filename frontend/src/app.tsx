@@ -18,7 +18,6 @@ import MyProgress from '@/Pages/MyProgress';
 import CourseCatalog from '@/Pages/CourseCatalog';
 import ProviderUserManagement from '@/Pages/ProviderUserManagement';
 import Error from '@/Pages/Error';
-import ResourcesManagement from '@/Pages/ResourcesManagement';
 import UnauthorizedNotFound from '@/Pages/Unauthorized';
 import AdminManagement from '@/Pages/AdminManagement.tsx';
 import StudentManagement from '@/Pages/StudentManagement.tsx';
