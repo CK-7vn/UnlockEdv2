@@ -28,14 +28,13 @@ export default function HelpfulLinkCard({
 
     const handleToggleVisibility = async () => {
         const response = await API.put<null, object>(
-            `/helpful-links/toggle/${link.id}`,
+            `helpful-links/toggle/${link.id}`,
             {}
         );
-        if (response.success) {
-            toaster(response.message, ToastState.success);
-        } else {
-            toaster(response.message, ToastState.error);
-        }
+        toaster(
+            response.message,
+            response.success ? ToastState.success : ToastState.error
+        );
     };
 
     if (!user) {

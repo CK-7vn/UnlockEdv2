@@ -32,19 +32,17 @@ func (db *DB) GetHelpfulLinks(page, perPage int, search, orderBy string) (int64,
 		return 0, nil, newGetRecordsDBError(err, "helpful_links")
 	}
 
-	offset := (page - 1) * perPage
-	//Pull and add calcOffset
-	if err := tx.Offset(offset).Limit(perPage).Find(&links).Error; err != nil {
+	if err := tx.Offset(calcOffset(page, perPage)).Limit(perPage).Find(&links).Error; err != nil {
 		return 0, nil, newGetRecordsDBError(err, "helpful_links")
 	}
 
 	return total, links, nil
 }
-func (db *DB) AddHelpfulLink(link models.HelpfulLink) error {
+func (db *DB) AddHelpfulLink(link *models.HelpfulLink) error {
 	if db.Where("url = ?", link.Url).First(&models.HelpfulLink{}).RowsAffected > 0 {
 		return NewDBError(fmt.Errorf("Link already exists"), "helpful_links")
 	}
-	if err := db.Create(&link).Error; err != nil {
+	if err := db.Create(link).Error; err != nil {
 		return newCreateDBError(err, "helpful_links")
 	}
 	return nil
