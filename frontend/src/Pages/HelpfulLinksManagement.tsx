@@ -19,29 +19,32 @@ import useSWR from 'swr';
 import { AxiosError } from 'axios';
 import API from '@/api/api';
 import SortByPills from '@/Components/pill-labels/SortByPills';
+import { SortOrderProvider, useSortOrder } from '@/Context/SortOrderCtx';
 
-export default function HelpfulLinksManagement() {
+function HelpfulLinksManagementMain() {
     const addLinkModal = useRef<HTMLDialogElement>(null);
     const editLinkModal = useRef<HTMLDialogElement>(null);
     const deleteLinkModal = useRef<HTMLDialogElement>(null);
     const [currentLink, setCurrentLink] = useState<HelpfulLink>();
     const [perPage, setPerPage] = useState<number>(10);
     const [pageQuery, setPageQuery] = useState<number>(1);
-    const [sortQuery, setSortQuery] = useState('created_at DESC');
     const [searchTerm, setSearchTerm] = useState<string>('');
     const searchQuery = useDebounceValue(searchTerm, 500);
+    const { setGlobalSortOrder } = useSortOrder();
     const { toaster } = useToast();
 
     const { data, mutate, error, isLoading } = useSWR<
         ServerResponseMany<HelpfulLink>,
         AxiosError
     >(
-        `/api/helpful-links?search=${searchQuery[0]}&page=${pageQuery}&per_page=${perPage}&sort=${sortQuery}`
+        `/api/helpful-links?search=${searchQuery[0]}&page=${pageQuery}&per_page=${perPage}`
     );
     const helpfulLinks = data?.data ?? [];
     const meta = data?.meta;
 
     function updateLinks() {
+        addLinkModal.current?.close();
+        editLinkModal.current?.close();
         void mutate();
     }
     async function deleteLink(id: number | undefined) {
@@ -52,6 +55,7 @@ export default function HelpfulLinksManagement() {
         } else {
             toaster(response.message, ToastState.error);
         }
+        deleteLinkModal.current?.close();
     }
 
     function showModifyLink(link: HelpfulLink, type: ModalType) {
@@ -73,6 +77,19 @@ export default function HelpfulLinksManagement() {
         setPageQuery(1);
         void mutate();
     };
+    async function updateGlobalSort(sort: string) {
+        const response = await API.put<
+            { message: string },
+            { sort_order: string }
+        >('helpful-links/sort', { sort_order: sort });
+        if (response.success) {
+            toaster(response.message, ToastState.success);
+            setGlobalSortOrder(sort);
+            void mutate();
+        } else {
+            toaster(response.message, ToastState.error);
+        }
+    }
 
     return (
         <>
@@ -85,47 +102,33 @@ export default function HelpfulLinksManagement() {
                     />
                     <h3 className="ml-2">Order:</h3>
                     <SortByPills
-                        selected={false}
                         label={{
                             name: 'Date Added ↓',
                             value: 'created_at DESC'
                         }}
-                        updateSort={setSortQuery}
+                        updateSort={(sort) => void updateGlobalSort(sort)}
                     />
                     <SortByPills
-                        selected={false}
                         label={{
                             name: 'Date Added ↑',
                             value: 'created_at ASC'
                         }}
-                        updateSort={setSortQuery}
+                        updateSort={(sort) => void updateGlobalSort(sort)}
                     />
                     <SortByPills
-                        selected={true}
                         label={{
                             name: 'Title (A-Z)',
                             value: 'title ASC'
                         }}
-                        updateSort={setSortQuery}
+                        updateSort={(sort) => void updateGlobalSort(sort)}
                     />
                     <SortByPills
-                        selected={false}
                         label={{
                             name: 'Title (Z-A)',
                             value: 'title DESC'
                         }}
-                        updateSort={setSortQuery}
+                        updateSort={(sort) => void updateGlobalSort(sort)}
                     />
-                    {/* <DropdownControl
-                        label="Order by"
-                        setState={setSortQuery}
-                        enumType={{
-                            'Date Added ↓': 'created_at DESC',
-                            'Date Added ↑': 'created_at ASC',
-                            'Title (A-Z)': 'title ASC',
-                            'Title (Z-A)': 'title DESC'
-                        }}
-                    /> */}
                 </div>
                 {/* add links button */}
                 <div
@@ -200,5 +203,13 @@ export default function HelpfulLinksManagement() {
                 </div>
             )}
         </>
+    );
+}
+
+export default function HelpfulLinksManagement() {
+    return (
+        <SortOrderProvider>
+            <HelpfulLinksManagementMain />
+        </SortOrderProvider>
     );
 }

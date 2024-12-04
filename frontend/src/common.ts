@@ -342,18 +342,6 @@ export interface ServerResponseMany<T> extends ServerResponseBase {
 
 export type ServerResponse<T> = ServerResponseOne<T> | ServerResponseMany<T>;
 
-export interface ResourceCategory {
-    id: number;
-    name: string;
-    links: ResourceLink[];
-    rank: number;
-}
-
-export type ResourceLink = Record<string, string>;
-
-export type EditableResourceCollection = ResourceCategory & {
-    isModified: boolean;
-};
 export interface OidcClient {
     client_id: string;
     client_secret: string;
@@ -632,7 +620,7 @@ export interface Resource {
 
 export interface HelpfulLink {
     id: number;
-    name: string;
+    title: string;
     description: string;
     url: string;
     visibility_status: boolean;

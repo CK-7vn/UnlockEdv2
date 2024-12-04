@@ -6,7 +6,7 @@ import (
 )
 
 func (db *DB) GetHelpfulLinks(page, perPage int, search, orderBy string) (int64, []models.HelpfulLink, error) {
-	var links []models.HelpfulLink
+	links := make([]models.HelpfulLink, 0, perPage)
 	tx := db.Model(&models.HelpfulLink{})
 	var total int64
 
@@ -33,6 +33,7 @@ func (db *DB) GetHelpfulLinks(page, perPage int, search, orderBy string) (int64,
 	}
 
 	offset := (page - 1) * perPage
+	//Pull and add calcOffset
 	if err := tx.Offset(offset).Limit(perPage).Find(&links).Error; err != nil {
 		return 0, nil, newGetRecordsDBError(err, "helpful_links")
 	}
@@ -77,4 +78,12 @@ func (db *DB) ToggleVisibilityStatus(id int) error {
 		return newUpdateDBError(err, "helpful_links")
 	}
 	return nil
+}
+
+func (db *DB) GetLinkFromId(id uint) (*models.HelpfulLink, error) {
+	var link models.HelpfulLink
+	if err := db.Model(&models.HelpfulLink{}).Where("id = ?", id).First(&link).Error; err != nil {
+		return nil, newGetRecordsDBError(err, "helpful_links")
+	}
+	return &link, nil
 }

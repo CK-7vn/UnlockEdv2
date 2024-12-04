@@ -1,22 +1,23 @@
 import {
     OpenContentFavorite,
     OpenContentItem,
-    ResourceCategory,
-    UserRole
+    UserRole,
+    HelpfulLink
 } from '@/common';
 import OpenContentCard from '@/Components/cards/OpenContentCard';
-import ResourcesCategoryCard from '@/Components/ResourcesCategoryCard';
+import HelpfulLinkCard from '@/Components/cards/HelpfulLinkCard';
 import ULIComponent from '@/Components/ULIComponent';
 import { useAuth } from '@/useAuth';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useLoaderData, useNavigate } from 'react-router-dom';
+import API from '@/api/api';
 
 export default function OpenContentLevelDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const { resources, topUserContent, topFacilityContent, favorites } =
+    const { helpfulLinks, topUserContent, topFacilityContent, favorites } =
         useLoaderData() as {
-            resources: ResourceCategory[];
+            helpfulLinks: HelpfulLink[];
             topUserContent: OpenContentItem[];
             topFacilityContent: OpenContentItem[];
             favorites: OpenContentFavorite[];
@@ -27,6 +28,21 @@ export default function OpenContentLevelDashboard() {
             navigate(`/open-content/libraries`);
         } else {
             navigate(`/open-content-management/libraries`);
+        }
+    }
+    async function handleHelpfulLinkClick(id: number): Promise<void> {
+        const response = await API.put<{ url: string }, null>(
+            `/helpful-links/activity/${id}`,
+            null
+        );
+        if (response.success) {
+            if (Array.isArray(response.data)) {
+                console.error('unexpected response data');
+            } else if (response.data?.url) {
+                window.open(response.data.url, '_blank');
+            } else {
+                console.error('unexpected response data');
+            }
         }
     }
 
@@ -77,10 +93,25 @@ export default function OpenContentLevelDashboard() {
                 </div>
                 <h2>Resources</h2>
                 <div className="card card-row-padding overflow-x-scroll no-scrollbar">
-                    {resources.map((resource: ResourceCategory) => (
-                        <div key={resource.id} className="w-[252px]">
-                            <ResourcesCategoryCard category={resource} />
-                        </div>
+                    {helpfulLinks.map((link: HelpfulLink) => (
+                        <a
+                            key={link.id}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-[252px] no-underline"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                void handleHelpfulLinkClick(link.id);
+                            }}
+                        >
+                            <div key={link.id} className="w-[252px]">
+                                <HelpfulLinkCard
+                                    link={link}
+                                    role={UserRole.Student}
+                                />
+                            </div>
+                        </a>
                     ))}
                 </div>
             </div>
