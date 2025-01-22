@@ -91,3 +91,13 @@ func (cp *OpenContentProvider) BeforeCreate(tx *gorm.DB) error {
 }
 
 func (OpenContentProvider) TableName() string { return "open_content_providers" }
+
+type OpenContentCategory struct {
+	ID   uint   `gorm:"primaryKey" `
+	Name string `gorm:"name" json:"name"`
+}
+
+func (OpenContentCategory) TableName() string {
+	//change to open content categories once we update migration
+	return "categories"
+}

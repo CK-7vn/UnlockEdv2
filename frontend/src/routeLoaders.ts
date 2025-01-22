@@ -86,3 +86,9 @@ export const getFacilities: LoaderFunction = async () => {
     }
     return json<null>(null);
 };
+
+export const getLibraryLayoutData: LoaderFunction = async () => {
+    const [categoriesResp] = await Promise.all([API.get(`categories`)]);
+    const categories = categoriesResp.data as string[];
+    return json({ categories: categories });
+};

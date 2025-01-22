@@ -42,12 +42,3 @@ type ProgramFavorite struct {
 func (ProgramFavorite) TableName() string {
 	return "program_favorites"
 }
-
-type Category struct {
-	ID   uint   `gorm:"primaryKey" `
-	Name string `gorm:"name" json:"name"`
-}
-
-func (Category) TableName() string {
-	return "categories"
-}

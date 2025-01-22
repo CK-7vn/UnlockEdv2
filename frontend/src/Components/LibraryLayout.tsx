@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import Pagination from './Pagination';
 import { AxiosError } from 'axios';
-import { useLocation } from 'react-router-dom';
+import { useLoaderData, useLocation } from 'react-router-dom';
 
 export default function LibaryLayout({
     studentView
@@ -62,6 +62,7 @@ export default function LibaryLayout({
     } = useSWR<ServerResponseMany<Library>, AxiosError>(
         `/api/libraries?page=${pageQuery}&per_page=${perPage}&order_by=${adminWithStudentView() || isAdministrator(user) ? orderBy : ''}&visibility=${getFilter()}&search=${searchTerm}`
     );
+    const { categories } = useLoaderData();
     const librariesMeta = libraries?.meta ?? {
         total: 0,
         per_page: 20,

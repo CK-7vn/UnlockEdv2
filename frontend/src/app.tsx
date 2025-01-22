@@ -41,6 +41,7 @@ import AdminLayer2 from './Pages/AdminLayer2.tsx';
 import {
     getAdminLevel1Data,
     getFacilities,
+    getLibraryLayoutData,
     getStudentLayer2Data,
     getStudentLevel1Data
 } from './routeLoaders.ts';
@@ -184,6 +185,7 @@ const router = createBrowserRouter([
                                 children: [
                                     {
                                         path: 'libraries',
+                                        loader: getLibraryLayoutData,
                                         element: <LibraryLayout />,
                                         errorElement: <Error />,
                                         handle: {
