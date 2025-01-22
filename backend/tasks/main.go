@@ -36,9 +36,11 @@ func main() {
 			continue
 		}
 		_, err := scheduler.NewJob(gocron.CronJob(getCronSchedule(&task, hour), false), gocron.NewTask(runner.runTask, &task))
+
 		if err != nil {
 			log.Errorf("Failed to create job: %v", err)
 			continue
+
 		}
 		hour++
 		if hour > 23 {

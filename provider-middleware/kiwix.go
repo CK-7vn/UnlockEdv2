@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"golang.org/x/exp/rand"
 	"gorm.io/gorm"
 )
 
@@ -113,6 +114,30 @@ func (ks *KiwixService) UpdateOrInsertLibrary(ctx context.Context, db *gorm.DB, 
 		FirstOrCreate(&library).Error; err != nil {
 		logger().Errorln("Error updating or inserting library: ", err)
 		return err
+	}
+	var id int
+	if err := db.Model(&models.Library{}).Where("external_id = ?", entry.ID).Select("id").Scan(&id).Error; err != nil {
+		logger().Errorln("Error getting library ID: ", err)
+	}
+	var categories []models.Category
+	if err := db.Model(&models.Category{}).Order("RANDOM()").Limit(rand.Intn(3)).Find(&categories).Error; err != nil {
+		logger().Errorln("Error getting random categories")
+		return err
+	}
+	for _, category := range categories {
+		openContentType := struct {
+			CategoryID            uint
+			ContentID             uint
+			OpenContentProviderID uint
+		}{
+			CategoryID:            category.ID,
+			ContentID:             uint(id),
+			OpenContentProviderID: providerId,
+		}
+		if err := db.WithContext(ctx).Table("open_content_types").Create(&openContentType).Error; err != nil {
+			logger().Errorln("Error seeding open_content_types: ", err)
+			return err
+		}
 	}
 	return nil
 }
