@@ -89,7 +89,9 @@ export const getFacilities: LoaderFunction = async () => {
 };
 
 export const getLibraryLayoutData: LoaderFunction = async () => {
-    const [categoriesResp] = await Promise.all([API.get(`categories`)]);
+    const [categoriesResp] = await Promise.all([
+        API.get(`open-content/categories`)
+    ]);
     const categories = categoriesResp.data as OpenContentCategory[];
     return json({ categories: categories });
 };

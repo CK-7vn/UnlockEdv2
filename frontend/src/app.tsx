@@ -441,6 +441,7 @@ const router = createBrowserRouter([
                                 children: [
                                     {
                                         path: 'libraries',
+                                        loader: getLibraryLayoutData,
                                         element: <LibraryLayout />,
                                         errorElement: <Error />,
                                         handle: {

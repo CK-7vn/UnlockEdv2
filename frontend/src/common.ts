@@ -806,13 +806,6 @@ export interface ProgramTag {
     value: number;
 }
 
-export enum FilterLibraries {
-    'All Libraries' = 'all',
-    'Newest' = 'created_at DESC',
-    'Oldest' = 'created_at ASC',
-    'Favorited' = 'most_popular'
-}
-
 export enum LibraryAdminVisibility {
     'All Libraries' = 'all',
     'Visible' = 'visible',

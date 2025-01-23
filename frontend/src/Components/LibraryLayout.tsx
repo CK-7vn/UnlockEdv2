@@ -1,10 +1,8 @@
 import {
-    FilterLibraries,
     LibraryAdminVisibility,
     Library,
     ServerResponseMany,
     UserRole,
-    FilterLibrariesVidsandHelpfulLinksAdmin,
     OpenContentCategory
 } from '@/common';
 import DropdownControl from '@/Components/inputs/DropdownControl';
@@ -26,15 +24,31 @@ export default function LibaryLayout({
     if (!user) {
         return null;
     }
+    const { categories } = useLoaderData() as {
+        categories: OpenContentCategory[];
+    };
+    console.log(categories);
+    const categoriesFilter = transformArrayToObject(categories);
+    function transformArrayToObject(
+        categories: OpenContentCategory[]
+    ): Record<string, string> {
+        return categories.reduce(
+            (acc, category, currentIndex) => {
+                if (currentIndex == 0) {
+                    acc['All Libraries'] = '';
+                }
+                acc[category.name] = category.id.toString();
+                return acc;
+            },
+            {} as Record<string, string>
+        );
+    }
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [filterLibraries, setFilterLibraries] = useState<string>(
-        FilterLibraries['All Libraries']
+        categoriesFilter['All Libraries']
     );
-    const [filterLibrariesAdmin, setFilterLibrariesAdmin] = useState<string>(
+    const [filterVisibilityAdmin, setFilterVisibilityAdmin] = useState<string>(
         LibraryAdminVisibility['All Libraries']
-    );
-    const [orderBy, setOrderBy] = useState<string>(
-        FilterLibrariesVidsandHelpfulLinksAdmin['Title (A to Z)']
     );
     let role = user.role;
     if (studentView) {
@@ -46,26 +60,14 @@ export default function LibaryLayout({
     const adminWithStudentView = (): boolean => {
         return !route.pathname.includes('management') && isAdministrator(user);
     };
-    const getFilter = (): string => {
-        return adminWithStudentView()
-            ? 'visible'
-            : isAdministrator(user)
-              ? filterLibrariesAdmin
-              : studentView
-                ? 'visible'
-                : filterLibraries;
-    };
     const {
         data: libraries,
         mutate: mutateLibraries,
         error: librariesError,
         isLoading: librariesLoading
     } = useSWR<ServerResponseMany<Library>, AxiosError>(
-        `/api/libraries?page=${pageQuery}&per_page=${perPage}&order_by=${adminWithStudentView() || isAdministrator(user) ? orderBy : ''}&visibility=${getFilter()}&search=${searchTerm}`
+        `/api/libraries?page=${pageQuery}&per_page=${perPage}&visibility=${isAdministrator(user) && !adminWithStudentView() ? filterVisibilityAdmin : 'visible'}&search=${searchTerm}&category=${filterLibraries}`
     );
-    const { categories } = useLoaderData() as {
-        categories: OpenContentCategory[];
-    };
     const librariesMeta = libraries?.meta ?? {
         total: 0,
         per_page: 20,
@@ -82,7 +84,7 @@ export default function LibaryLayout({
 
     useEffect(() => {
         setPageQuery(1);
-    }, [filterLibrariesAdmin, filterLibraries, searchTerm]);
+    }, [filterVisibilityAdmin, filterLibraries, searchTerm]);
 
     function updateLibrary() {
         void mutateLibraries();
@@ -95,26 +97,16 @@ export default function LibaryLayout({
                     searchTerm={searchTerm}
                     changeCallback={setSearchTerm}
                 />
-                {adminWithStudentView() || role === UserRole.Student ? (
+                {isAdministrator(user) && !adminWithStudentView() && (
                     <DropdownControl
-                        label="Filter by"
-                        enumType={FilterLibraries}
-                        setState={setFilterLibraries}
+                        enumType={LibraryAdminVisibility}
+                        setState={setFilterVisibilityAdmin}
                     />
-                ) : (
-                    <>
-                        <DropdownControl
-                            label="Show"
-                            enumType={LibraryAdminVisibility}
-                            setState={setFilterLibrariesAdmin}
-                        />
-                        <DropdownControl
-                            label="Filter by"
-                            enumType={FilterLibrariesVidsandHelpfulLinksAdmin}
-                            setState={setOrderBy}
-                        />
-                    </>
                 )}
+                <DropdownControl
+                    enumType={categoriesFilter}
+                    setState={setFilterLibraries}
+                />
             </div>
             <div className="grid grid-cols-4 gap-6">
                 {libraries?.data.map((library) => (

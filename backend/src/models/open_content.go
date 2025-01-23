@@ -93,7 +93,7 @@ func (cp *OpenContentProvider) BeforeCreate(tx *gorm.DB) error {
 func (OpenContentProvider) TableName() string { return "open_content_providers" }
 
 type OpenContentCategory struct {
-	ID   uint   `gorm:"primaryKey" `
+	ID   uint   `gorm:"primaryKey" json:"id"`
 	Name string `gorm:"name" json:"name"`
 }
 

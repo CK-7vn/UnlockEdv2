@@ -33,8 +33,12 @@ func (srv *Server) handleIndexLibraries(w http.ResponseWriter, r *http.Request, 
 	} else if userIsAdmin(r) {
 		showHidden = r.URL.Query().Get("visibility")
 	}
+	categoryId, err := strconv.Atoi(r.URL.Query().Get("category"))
+	if err != nil {
+		categoryId = -1
+	}
 	claims := r.Context().Value(ClaimsKey).(*Claims)
-	total, libraries, err := srv.Db.GetAllLibraries(page, perPage, days, claims.UserID, claims.FacilityID, showHidden, orderBy, search, claims.isAdmin())
+	total, libraries, err := srv.Db.GetAllLibraries(page, perPage, days, claims.UserID, claims.FacilityID, showHidden, orderBy, search, claims.isAdmin(), categoryId)
 	if err != nil {
 		return newDatabaseServiceError(err)
 	}

@@ -119,8 +119,8 @@ func (ks *KiwixService) UpdateOrInsertLibrary(ctx context.Context, db *gorm.DB, 
 	if err := db.Model(&models.Library{}).Where("external_id = ?", entry.ID).Select("id").Scan(&id).Error; err != nil {
 		logger().Errorln("Error getting library ID: ", err)
 	}
-	var categories []models.Category
-	if err := db.Model(&models.Category{}).Order("RANDOM()").Limit(rand.Intn(3)).Find(&categories).Error; err != nil {
+	var categories []models.OpenContentCategory
+	if err := db.Model(&models.OpenContentCategory{}).Order("RANDOM()").Limit(rand.Intn(3)).Find(&categories).Error; err != nil {
 		logger().Errorln("Error getting random categories")
 		return err
 	}
@@ -144,7 +144,6 @@ func (ks *KiwixService) UpdateOrInsertLibrary(ctx context.Context, db *gorm.DB, 
 
 func RemoveDeletedEntries(ctx context.Context, db *gorm.DB, externalIds []string, providerId uint) (int64, error) {
 	logger().Infoln("Removing any deleted Kiwix libraries")
-
 	tx := db.WithContext(ctx).Where("open_content_provider_id = ?", providerId).Delete(&models.Library{}, "external_id NOT IN (?)", externalIds)
 	if tx.Error != nil {
 		return 0, tx.Error
