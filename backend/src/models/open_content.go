@@ -98,6 +98,5 @@ type OpenContentCategory struct {
 }
 
 func (OpenContentCategory) TableName() string {
-	//change to open content categories once we update migration
-	return "categories"
+	return "open_content_categories"
 }

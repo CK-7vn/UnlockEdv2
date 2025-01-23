@@ -6,7 +6,8 @@ import {
     HelpfulLinkAndSort,
     Library,
     UserCoursesInfo,
-    ActivityMapData
+    ActivityMapData,
+    OpenContentCategory
 } from './common';
 import API from './api/api';
 import { fetchUser } from './useAuth';
@@ -89,6 +90,6 @@ export const getFacilities: LoaderFunction = async () => {
 
 export const getLibraryLayoutData: LoaderFunction = async () => {
     const [categoriesResp] = await Promise.all([API.get(`categories`)]);
-    const categories = categoriesResp.data as string[];
+    const categories = categoriesResp.data as OpenContentCategory[];
     return json({ categories: categories });
 };

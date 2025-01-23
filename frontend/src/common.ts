@@ -867,3 +867,8 @@ export interface ActivityMapData {
     total_time: string;
     quartile: number;
 }
+
+export interface OpenContentCategory {
+    id: number;
+    name: string;
+}

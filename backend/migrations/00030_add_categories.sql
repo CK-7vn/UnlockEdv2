@@ -1,10 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE public.categories (
+CREATE TABLE public.open_content_categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL
 );
-CREATE INDEX idx_categories_name ON public.categories USING btree(name);
+CREATE INDEX idx_open_content_categories_name ON public.open_content_categories USING btree(name);
 
 CREATE TABLE public.open_content_types (
     category_id integer NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE public.open_content_types (
     PRIMARY KEY (category_id, content_id, open_content_provider_id) 
 );
 
-INSERT INTO categories (name) VALUES 
+INSERT INTO open_content_categories (name) VALUES 
 ('Adult Basic Education'),
 ('Higher Education'),
 ('Vocational'),
@@ -24,7 +24,7 @@ INSERT INTO categories (name) VALUES
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS public.categories CASCADE; 
+DROP TABLE IF EXISTS public.open_content_categories CASCADE; 
 DROP TABLE IF EXISTS public.open_content_types CASCADE;
 -- +goose StatementEnd
 

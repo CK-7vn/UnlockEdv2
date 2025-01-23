@@ -4,7 +4,8 @@ import {
     Library,
     ServerResponseMany,
     UserRole,
-    FilterLibrariesVidsandHelpfulLinksAdmin
+    FilterLibrariesVidsandHelpfulLinksAdmin,
+    OpenContentCategory
 } from '@/common';
 import DropdownControl from '@/Components/inputs/DropdownControl';
 import SearchBar from '@/Components/inputs/SearchBar';
@@ -62,7 +63,9 @@ export default function LibaryLayout({
     } = useSWR<ServerResponseMany<Library>, AxiosError>(
         `/api/libraries?page=${pageQuery}&per_page=${perPage}&order_by=${adminWithStudentView() || isAdministrator(user) ? orderBy : ''}&visibility=${getFilter()}&search=${searchTerm}`
     );
-    const { categories } = useLoaderData();
+    const { categories } = useLoaderData() as {
+        categories: OpenContentCategory[];
+    };
     const librariesMeta = libraries?.meta ?? {
         total: 0,
         per_page: 20,
