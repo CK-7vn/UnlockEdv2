@@ -7,7 +7,7 @@ import {
     Library,
     UserCoursesInfo,
     ActivityMapData,
-    OpenContentCategory
+    Option
 } from './common';
 import API from './api/api';
 import { fetchUser } from './useAuth';
@@ -92,6 +92,7 @@ export const getLibraryLayoutData: LoaderFunction = async () => {
     const [categoriesResp] = await Promise.all([
         API.get(`open-content/categories`)
     ]);
-    const categories = categoriesResp.data as OpenContentCategory[];
+    console.log('categories response: ', categoriesResp);
+    const categories = categoriesResp.data as Option[];
     return json({ categories: categories });
 };

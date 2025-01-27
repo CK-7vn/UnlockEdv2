@@ -2,6 +2,7 @@ package main
 
 import (
 	"UnlockEdv2/src/models"
+
 	"context"
 	"fmt"
 	"net/http"
@@ -103,6 +104,7 @@ func main() {
 
 func initLogging() *log.Logger {
 	var logger = log.New()
+
 	logger.SetFormatter(&log.JSONFormatter{})
 	logger.SetLevel(log.InfoLevel)
 	return logger

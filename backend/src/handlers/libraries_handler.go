@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (srv *Server) registerLibraryRoutes() []routeDef {
@@ -33,12 +34,20 @@ func (srv *Server) handleIndexLibraries(w http.ResponseWriter, r *http.Request, 
 	} else if userIsAdmin(r) {
 		showHidden = r.URL.Query().Get("visibility")
 	}
-	categoryId, err := strconv.Atoi(r.URL.Query().Get("category"))
-	if err != nil {
-		categoryId = -1
+	categories := r.URL.Query().Get("category")
+	var categoryKeys []int
+	if categories != "" {
+		for _, idStr := range strings.Split(categories, ",") {
+			id, err := strconv.Atoi(idStr)
+			if err == nil {
+				categoryKeys = append(categoryKeys, id)
+			}
+		}
+	} else {
+		categoryKeys = []int{}
 	}
 	claims := r.Context().Value(ClaimsKey).(*Claims)
-	total, libraries, err := srv.Db.GetAllLibraries(page, perPage, days, claims.UserID, claims.FacilityID, showHidden, orderBy, search, claims.isAdmin(), categoryId)
+	total, libraries, err := srv.Db.GetAllLibraries(page, perPage, days, claims.UserID, claims.FacilityID, showHidden, orderBy, search, claims.isAdmin(), categoryKeys)
 	if err != nil {
 		return newDatabaseServiceError(err)
 	}

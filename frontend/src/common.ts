@@ -865,3 +865,8 @@ export interface OpenContentCategory {
     id: number;
     name: string;
 }
+
+export interface Option {
+    key: number;
+    value: string;
+}

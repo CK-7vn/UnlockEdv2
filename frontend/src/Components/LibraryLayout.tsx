@@ -3,9 +3,10 @@ import {
     Library,
     ServerResponseMany,
     UserRole,
-    OpenContentCategory
+    Option
 } from '@/common';
 import DropdownControl from '@/Components/inputs/DropdownControl';
+import MultiSelectDropdown from './MultiSelectDropdownControl';
 import SearchBar from '@/Components/inputs/SearchBar';
 import LibraryCard from '@/Components/LibraryCard';
 import { isAdministrator, useAuth } from '@/useAuth';
@@ -25,28 +26,10 @@ export default function LibaryLayout({
         return null;
     }
     const { categories } = useLoaderData() as {
-        categories: OpenContentCategory[];
+        categories: Option[];
     };
-    console.log(categories);
-    const categoriesFilter = transformArrayToObject(categories);
-    function transformArrayToObject(
-        categories: OpenContentCategory[]
-    ): Record<string, string> {
-        return categories.reduce(
-            (acc, category, currentIndex) => {
-                if (currentIndex == 0) {
-                    acc['All Libraries'] = '';
-                }
-                acc[category.name] = category.id.toString();
-                return acc;
-            },
-            {} as Record<string, string>
-        );
-    }
+    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [filterLibraries, setFilterLibraries] = useState<string>(
-        categoriesFilter['All Libraries']
-    );
     const [filterVisibilityAdmin, setFilterVisibilityAdmin] = useState<string>(
         LibraryAdminVisibility['All Libraries']
     );
@@ -66,8 +49,14 @@ export default function LibaryLayout({
         error: librariesError,
         isLoading: librariesLoading
     } = useSWR<ServerResponseMany<Library>, AxiosError>(
-        `/api/libraries?page=${pageQuery}&per_page=${perPage}&visibility=${isAdministrator(user) && !adminWithStudentView() ? filterVisibilityAdmin : 'visible'}&search=${searchTerm}&category=${filterLibraries}`
+        `/api/libraries?page=${pageQuery}&per_page=${perPage}&visibility=${isAdministrator(user) && !adminWithStudentView() ? filterVisibilityAdmin : 'visible'}&search=${searchTerm}&category=${selectedCategories.includes(0) ? '' : selectedCategories.join(',')}`
     );
+
+    const uniqueLibraries = libraries?.data
+        ? Array.from(
+              new Map(libraries.data.map((lib) => [lib.id, lib])).values()
+          )
+        : [];
     const librariesMeta = libraries?.meta ?? {
         total: 0,
         per_page: 20,
@@ -84,7 +73,7 @@ export default function LibaryLayout({
 
     useEffect(() => {
         setPageQuery(1);
-    }, [filterVisibilityAdmin, filterLibraries, searchTerm]);
+    }, [filterVisibilityAdmin, searchTerm, selectedCategories]);
 
     function updateLibrary() {
         void mutateLibraries();
@@ -103,13 +92,18 @@ export default function LibaryLayout({
                         setState={setFilterVisibilityAdmin}
                     />
                 )}
-                <DropdownControl
-                    enumType={categoriesFilter}
-                    setState={setFilterLibraries}
+                <MultiSelectDropdown
+                    label="Categories"
+                    options={categories}
+                    selectedOptions={selectedCategories}
+                    onSelectionChange={setSelectedCategories}
+                    onBlurSearch={() => {
+                        void mutateLibraries;
+                    }}
                 />
             </div>
             <div className="grid grid-cols-4 gap-6">
-                {libraries?.data.map((library) => (
+                {uniqueLibraries?.map((library) => (
                     <LibraryCard
                         key={library.id}
                         library={library}
