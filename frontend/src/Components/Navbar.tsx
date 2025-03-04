@@ -210,7 +210,7 @@ export default function Navbar({
                                 ) && (
                                     <>
                                         <li>
-                                            <Link to="/home">
+                                            <Link to="/temp-home">
                                                 <ULIComponent icon={HomeIcon} />
                                                 Home
                                             </Link>
@@ -223,11 +223,11 @@ export default function Navbar({
                             ) && (
                                 <>
                                     <li>
-                                        <Link to="/trending-content">
+                                        <Link to="/home">
                                             <ULIComponent
                                                 icon={ArrowTrendingUpIcon}
                                             />
-                                            Trending Content
+                                            Home
                                         </Link>
                                     </li>
                                     <li>
