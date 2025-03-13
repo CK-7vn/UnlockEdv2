@@ -115,27 +115,6 @@ export default function AdminManagement() {
         setTempPassword('');
     }
 
-    const getUserIconData = {
-        'data-tip': (user: User) => {
-            return user.role === UserRole.SystemAdmin
-                ? 'Cannot Delete'
-                : 'Delete Admin';
-        },
-        icon: (user: User) => {
-            return user.role === UserRole.SystemAdmin
-                ? LockClosedIcon
-                : TrashIcon;
-        },
-        onClick: (user: User) => {
-            return user.role === UserRole.SystemAdmin
-                ? undefined
-                : () => {
-                      setTargetUser(user);
-                      showModal(deleteUserModal);
-                  };
-        }
-    };
-
     return (
         <div>
             <div className="flex flex-col space-y-6 overflow-x-auto rounded-lg p-4 px-5">
@@ -240,48 +219,6 @@ export default function AdminManagement() {
                                             </td>
                                             <td className="justify-self-end">
                                                 <div className="flex space-x-4">
-                                                    <ULIComponent
-                                                        dataTip={'Edit Admin'}
-                                                        tooltipClassName="tooltip-left cursor-pointer"
-                                                        onClick={() => {
-                                                            setTargetUser(
-                                                                user!
-                                                            );
-                                                            showModal(
-                                                                editUserModal
-                                                            );
-                                                        }}
-                                                        icon={PencilSquareIcon}
-                                                    />
-                                                    <ULIComponent
-                                                        dataTip={
-                                                            'Reset Password'
-                                                        }
-                                                        tooltipClassName="tooltip-left cursor-pointer"
-                                                        onClick={() => {
-                                                            setTargetUser(
-                                                                user!
-                                                            );
-                                                            showModal(
-                                                                resetUserPasswordModal
-                                                            );
-                                                        }}
-                                                        icon={
-                                                            ArrowPathRoundedSquareIcon
-                                                        }
-                                                    />
-                                                    <ULIComponent
-                                                        dataTip={getUserIconData[
-                                                            'data-tip'
-                                                        ](user!)}
-                                                        tooltipClassName="tooltip-left cursor-pointer"
-                                                        onClick={getUserIconData.onClick(
-                                                            user!
-                                                        )}
-                                                        icon={getUserIconData.icon(
-                                                            user!
-                                                        )}
-                                                    />
                                                     {canEdit(
                                                         user!,
                                                         targetUser
@@ -400,7 +337,7 @@ export default function AdminManagement() {
                 text={
                     'Are you sure you would like to delete this admin? This action cannot be undone.'
                 }
-                onSubmit={() => deleteUser}
+                onSubmit={() => void deleteUser()}
                 onClose={() => handleCancelModal(deleteUserModal)}
             />
             <TextOnlyModal
